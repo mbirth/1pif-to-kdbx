@@ -80,6 +80,10 @@ for line in data:
     entry = kp.add_entry(group, item["title"], "", "")
     secure = item["secureContents"]
 
+    # Tags
+    if "openContents" in item and "tags" in item["openContents"]:
+        entry.tags = item["openContents"]["tags"]
+
     # Username
     if "username" in secure:
         entry.username = secure["username"]
