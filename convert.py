@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import os
 import datetime
@@ -6,7 +6,7 @@ import shutil
 import json
 
 from pykeepass import PyKeePass
-from urlparse import urlparse
+from urllib.parse import urlparse
 
 shutil.copyfile("in.kdbx", "out.kdbx")
 
