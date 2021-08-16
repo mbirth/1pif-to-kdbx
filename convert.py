@@ -3,7 +3,6 @@
 import argparse
 import datetime
 import json
-import pathlib
 
 from os.path import splitext
 from pykeepass import create_database
@@ -91,7 +90,9 @@ for line in data:
     if "password" in secure:
         entry.password = secure["password"]
     else:
-        entry.password = getField(item, "password")
+        new_password = getField(item, "password")
+        if new_password:
+            entry.password = new_password
 
     # Other web fields
     if "fields" in secure:
