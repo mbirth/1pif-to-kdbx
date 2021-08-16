@@ -5,12 +5,10 @@ import datetime
 import shutil
 import json
 
-from pykeepass import PyKeePass
+from pykeepass import PyKeePass, create_database
 from urllib.parse import urlparse
 
-shutil.copyfile("in.kdbx", "out.kdbx")
-
-kp = PyKeePass("out.kdbx", password="test")
+kp = create_database("out.kdbx", password="test")
 
 groupLabels = {
     "passwords.Password": "Passwords",
