@@ -1,3 +1,6 @@
 .*.swp
+/.venv/
 /env
 *.1pif
+out.kdbx
+*.xml
