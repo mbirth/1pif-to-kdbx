@@ -3,6 +3,7 @@
 import argparse
 import datetime
 import json
+import onepif
 
 from os.path import splitext
 from pykeepass import create_database
@@ -64,14 +65,9 @@ def getField(item, designation):
     return None
 
 
-with open("{}/data.1pif".format(args.inpath), "r") as fp:
-    data = fp.read().strip().split("***5642bee8-a5ff-11dc-8314-0800200c9a66***")
+opif = onepif.OnepifReader("{}/data.1pif".format(args.inpath))
 
-for line in data:
-    if line.strip() == "":
-        continue
-
-    item = json.loads(line.strip())
+for item in opif:
     if item.get("trashed"):
         continue
 
