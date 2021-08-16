@@ -1,14 +1,29 @@
 #!/usr/bin/env python3
 
-import os
+import argparse
 import datetime
-import shutil
 import json
+import pathlib
 
-from pykeepass import PyKeePass, create_database
+from os.path import splitext
+from pykeepass import create_database
 from urllib.parse import urlparse
 
-kp = create_database("out.kdbx", password="test")
+parser = argparse.ArgumentParser(description="Convert 1Password 1PIF exports into a KeePass KDBX file.")
+parser.add_argument("inpath", metavar="input.1pif", help="1Password export file/folder")
+parser.add_argument("outfile", metavar="output.kdbx", nargs="?", help="Desired filename for KeePass file. If omitted, defaults to <input>.kdbx. Existing files WILL BE OVERWRITTEN!")
+
+args = parser.parse_args()
+
+if not args.outfile:
+    fileparts = splitext(args.inpath)
+    args.outfile = "{}.kdbx".format(fileparts[0])
+
+outparts = splitext(args.outfile)
+if not outparts[1] == "kdbx":
+    args.outfile += ".kdbx"
+
+kp = create_database(args.outfile, password="test")
 
 groupLabels = {
     "passwords.Password": "Passwords",
@@ -24,6 +39,7 @@ groupLabels = {
 }
 groups = {}
 
+
 def getGroup(item):
     group = groups.get(item["typeName"])
     if group:
@@ -37,6 +53,7 @@ def getGroup(item):
     groups[item["typeName"]] = group
     return group
 
+
 def getField(item, designation):
     secure = item["secureContents"]
     if "fields" in secure:
@@ -48,7 +65,7 @@ def getField(item, designation):
     return None
 
 
-with open("in.1pif/data.1pif", "r") as fp:
+with open("{}/data.1pif".format(args.inpath), "r") as fp:
     data = fp.read().strip().split("***5642bee8-a5ff-11dc-8314-0800200c9a66***")
 
 for line in data:
@@ -172,7 +189,6 @@ for line in data:
     if applySettings:
         settings["Allow"] = list(set(settings["Allow"]))
         entry.set_custom_property("KeePassHttp Settings", json.dumps(settings))
-
 
     # Dates
     entry.ctime = datetime.datetime.fromtimestamp(item["createdAt"])

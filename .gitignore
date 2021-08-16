@@ -2,5 +2,5 @@
 /.venv/
 /env
 *.1pif
-out.kdbx
+*.kdbx
 *.xml
