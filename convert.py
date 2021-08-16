@@ -180,9 +180,17 @@ for line in data:
     if "location" in item:
         entry.url = item["location"]
     if "URLs" in secure:
+        kp2idx = 0
         for u in secure["URLs"]:
             if not entry.url:
                 entry.url = u["url"]
+            else:
+                # https://github.com/keepassxreboot/keepassxc/pull/3558
+                prop_name = "KP2A_URL"
+                if kp2idx > 0:
+                    prop_name += "_{}".format(kp2idx)
+                entry.set_custom_property(prop_name, u["url"])
+                kp2idx += 1
             url = urlparse(u["url"])
             settings["Allow"].append(url.hostname)
             applySettings = True
