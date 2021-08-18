@@ -7,7 +7,7 @@ import onepif
 
 from os.path import splitext
 from pykeepass import create_database
-from urllib.parse import urlparse
+from urllib.parse import urlparse, quote_plus
 
 parser = argparse.ArgumentParser(description="Convert 1Password 1PIF exports into a KeePass KDBX file.")
 parser.add_argument("inpath", metavar="input.1pif", help="1Password export file/folder")
@@ -65,6 +65,18 @@ def getField(item, designation):
     return None
 
 
+def getTotp(item):
+    secure = item["secureContents"]
+    if "sections" in secure:
+        for section in secure["sections"]:
+            if not "fields" in section:
+                continue
+            for field in section["fields"]:
+                if field["t"] == "totp":
+                    return field["v"]
+    return None
+
+
 opif = onepif.OnepifReader("{}/data.1pif".format(args.inpath))
 
 for item in opif:
@@ -93,6 +105,12 @@ for item in opif:
         new_password = getField(item, "password")
         if new_password:
             entry.password = new_password
+
+    # TOTP
+    totp = getTotp(item)
+    if totp:
+        entry.set_custom_property("TimeOtp-Secret-Base32", totp)
+        entry.set_custom_property("otp", "otpauth://totp/Sample:username?secret={}&algorithm=SHA1&digits=6&period=30&issuer=Sample".format(quote_plus(totp)))
 
     # Other web fields
     if "fields" in secure:
