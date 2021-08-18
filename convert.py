@@ -20,7 +20,7 @@ if not args.outfile:
     args.outfile = "{}.kdbx".format(fileparts[0])
 
 outparts = splitext(args.outfile)
-if not outparts[1] == "kdbx":
+if outparts[1] != ".kdbx":
     args.outfile += ".kdbx"
 
 kp = create_database(args.outfile, password="test")
