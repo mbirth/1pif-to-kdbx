@@ -26,10 +26,13 @@ class OnepifEntry():
 
     def __init__(self, data):
         self.raw = data
-        if data["typeName"] not in TYPES:
-            raise Exception("Unknown record type: {}".format(data["typeName"]))
-        self.type = data["typeName"]
-        self.type_name = TYPES[data["typeName"]]
+        self.set_type(data["typeName"])
+
+    def set_type(self, new_type):
+        if new_type not in TYPES:
+            raise Exception("Unknown record type: {}".format(new_type))
+        self.type = new_type
+        self.type_name = TYPES[new_type]
 
     def __getattr__(self, name):
         if name not in self.raw:

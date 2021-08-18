@@ -4,9 +4,9 @@ import argparse
 import datetime
 import json
 import onepif
+import kpwriter
 
 from os.path import splitext
-from pykeepass import create_database
 from urllib.parse import urlparse, quote_plus
 
 parser = argparse.ArgumentParser(description="Convert 1Password 1PIF exports into a KeePass KDBX file.")
@@ -15,15 +15,23 @@ parser.add_argument("outfile", metavar="output.kdbx", nargs="?", help="Desired f
 
 args = parser.parse_args()
 
+# If no outfile given, use infile name
 if not args.outfile:
     fileparts = splitext(args.inpath)
     args.outfile = "{}.kdbx".format(fileparts[0])
 
+# If given outfile doesn't have .kdbx extension, add it
 outparts = splitext(args.outfile)
 if outparts[1] != ".kdbx":
     args.outfile += ".kdbx"
 
-kp = create_database(args.outfile, password="test")
+# Open input file
+print("Input file: {}".format(args.inpath))
+opif = onepif.OnepifReader("{}/data.1pif".format(args.inpath))
+
+# Open output file
+print("Output file: {}".format(args.outfile))
+kp = kpwriter.KpWriter(args.outfile, "test")
 
 
 def getField(item, designation):
@@ -49,7 +57,8 @@ def getTotp(item):
     return None
 
 
-opif = onepif.OnepifReader("{}/data.1pif".format(args.inpath))
+# FIXME: Convert everything to use KpWriter class
+kp = kp.kp
 
 for item in opif:
     if item.get("trashed"):
@@ -166,7 +175,7 @@ for item in opif:
                         entry.set_custom_property(ft, str(d))
                     elif k == "address":
                         # needs special handling!
-                        pass # for now
+                        pass   # for now
                     else:
                         raise Exception("Unknown k: {}".format(k))
 
