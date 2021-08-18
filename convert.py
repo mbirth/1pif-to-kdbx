@@ -105,7 +105,9 @@ for item in opif:
     if "username" in secure:
         entry.username = secure["username"]
     else:
-        entry.username = getField(item, "username")
+        username = getField(item, "username")
+        if username:
+            entry.username = username
 
     # Password
     if "password" in secure:
