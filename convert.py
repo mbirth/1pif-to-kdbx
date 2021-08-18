@@ -36,6 +36,15 @@ groupLabels = {
     "wallet.financial.BankAccountUS": "Bank Accounts",
     "wallet.financial.CreditCard": "Credit Cards",
     "wallet.computer.License": "Licenses",
+    "wallet.government.SsnUS": "Social Security Numbers",
+    "wallet.government.HuntingLicense": "Outdoor Licenses",
+    "113": "Medical Records",
+    "wallet.computer.Database": "Databases",
+    "wallet.membership.RewardProgram": "Reward Programs",
+    "112": "API Credentials",
+    "identities.Identity": "Identities",
+    "wallet.onlineservices.Email.v2": "Email Accounts",
+    "wallet.government.DriversLicense": "Driver Licenses",
 }
 groups = {}
 
@@ -175,11 +184,17 @@ for item in opif:
                     ft = "{} - {}".format(t, f["t"])
                     if t == "":
                         ft = f["t"]
-                    if k == "string" or k == "concealed" or k == "menu" or k == "cctype" or k == "monthYear":
+                    if ft == "URL":
+                        # Reserved!
+                        ft = "URL_"
+                    if k in ["string", "concealed", "menu", "cctype", "monthYear", "email"]:
                         entry.set_custom_property(ft, str(v))
                     elif k == "date":
                         d = datetime.datetime.fromtimestamp(v)
                         entry.set_custom_property(ft, str(d))
+                    elif k == "address":
+                        # needs special handling!
+                        pass # for now
                     else:
                         raise Exception("Unknown k: {}".format(k))
 
