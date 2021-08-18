@@ -25,43 +25,6 @@ if outparts[1] != ".kdbx":
 
 kp = create_database(args.outfile, password="test")
 
-groupLabels = {
-    "passwords.Password": "Passwords",
-    "webforms.WebForm": "Logins",
-    "wallet.membership.Membership": "Memberships",
-    "securenotes.SecureNote": "Notes",
-    "wallet.government.Passport": "Passports",
-    "wallet.computer.UnixServer": "Servers",
-    "wallet.computer.Router": "Routers",
-    "wallet.financial.BankAccountUS": "Bank Accounts",
-    "wallet.financial.CreditCard": "Credit Cards",
-    "wallet.computer.License": "Licenses",
-    "wallet.government.SsnUS": "Social Security Numbers",
-    "wallet.government.HuntingLicense": "Outdoor Licenses",
-    "113": "Medical Records",
-    "wallet.computer.Database": "Databases",
-    "wallet.membership.RewardProgram": "Reward Programs",
-    "112": "API Credentials",
-    "identities.Identity": "Identities",
-    "wallet.onlineservices.Email.v2": "Email Accounts",
-    "wallet.government.DriversLicense": "Driver Licenses",
-}
-groups = {}
-
-
-def getGroup(item):
-    group = groups.get(item["typeName"])
-    if group:
-        return group
-
-    label = groupLabels.get(item["typeName"])
-    if not label:
-        raise Exception("Unknown type name {}".format(item["typeName"]))
-
-    group = kp.add_group(kp.root_group, label)
-    groups[item["typeName"]] = group
-    return group
-
 
 def getField(item, designation):
     secure = item["secureContents"]
@@ -92,8 +55,15 @@ for item in opif:
     if item.get("trashed"):
         continue
 
-    group = getGroup(item)
 
+    # Make sure target group exists
+    item_type_name = item.type_name
+    target_group_name = "{}s".format(item_type_name)   # plural for group
+    group = kp.find_groups(name=target_group_name, group=kp.root_group, first=True)
+    if not group:
+        group = kp.add_group(kp.root_group, target_group_name)
+
+    # Add entry to KeePass
     entry = kp.add_entry(group, item["title"], "", "")
     secure = item["secureContents"]
 
