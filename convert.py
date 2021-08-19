@@ -5,6 +5,7 @@ import datetime
 import json
 import onepif
 import kpwriter
+import pykeepass.icons
 
 from os.path import splitext
 from urllib.parse import urlparse, quote_plus
@@ -57,28 +58,54 @@ def getTotp(item):
     return None
 
 
-# FIXME: Convert everything to use KpWriter class
-kp = kp.kp
+ICON_MAP = {
+    "112": "GEAR",   # API Credential
+    "wallet.financial.BankAccountUS": "DOLLAR_SIGN",   # Bank Account
+    "wallet.financial.CreditCard": "DOLLAR_SIGN",   # Credit Card
+    "wallet.computer.Database": "SERVER",   # Database
+    # Not exported: Document
+    "wallet.government.DriversLicense": "BUSINESS_CARD",   # Driver License
+    "wallet.onlineservices.Email.v2": "ENVELOPE",   # Email Account
+    "identities.Identity": "BUSINESS_CARD",   # Identity
+    "webforms.WebForm": "MANAGER",   # Login
+    "113": "WARNING_SIGN",   # Medical Record
+    "wallet.membership.Membership": "BUSINESS_CARD",   # Membership
+    "wallet.government.HuntingLicense": "BUSINESS_CARD",   # Outdoor License
+    "wallet.government.Passport": "BUSINESS_CARD",   # Passport
+    "passwords.Password": "KEY",   # Password
+    "wallet.membership.RewardProgram": "PERCENT_SIGN",   # Reward Program
+    "securenotes.SecureNote": "POST_IT",   # Secure Note
+    "wallet.computer.UnixServer": "SERVER_2",   # Server
+    "wallet.government.SsnUS": "BUSINESS_CARD",   # Social Security Number
+    "wallet.computer.License": "CARDBOARD",   # Software License
+    "wallet.computer.Router": "12",   # Wireless Router
+}
 
 for item in opif:
-    if item.get("trashed"):
-        continue
-
 
     # Make sure target group exists
     item_type_name = item.type_name
     target_group_name = "{}s".format(item_type_name)   # plural for group
-    group = kp.find_groups(name=target_group_name, group=kp.root_group, first=True)
-    if not group:
-        group = kp.add_group(kp.root_group, target_group_name)
+
+    if item.is_trash():
+        target_group_name = "Recycle Bin"
 
     # Add entry to KeePass
-    entry = kp.add_entry(group, item["title"], "", "")
+    entry = kp.add_entry(target_group_name, item["title"])
+
+    # Set icon
+    kp_icon = ICON_MAP[item.type]
+    if kp_icon in dir(pykeepass.icons):
+        kp_icon_id = getattr(pykeepass.icons, kp_icon)
+    else:
+        # FIXME: Assume kp_icon is already ID, needed b/c icon 12 is missing from pykeepass.icons
+        kp_icon_id = kp_icon
+    entry.icon = kp_icon_id
+
     secure = item["secureContents"]
 
     # Tags
-    if "openContents" in item and "tags" in item["openContents"]:
-        entry.tags = item["openContents"]["tags"]
+    entry.tags = item.get_tags()
 
     # Username
     if "username" in secure:

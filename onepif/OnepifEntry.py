@@ -34,6 +34,18 @@ class OnepifEntry():
         self.type = new_type
         self.type_name = TYPES[new_type]
 
+    def get_tags(self):
+        if "openContents" not in self.raw:
+            return []
+        if "tags" not in self.raw["openContents"]:
+            return []
+        return self.raw["openContents"]["tags"]
+
+    def is_trash(self):
+        if "trashed" in self.raw:
+            return self.raw["trashed"]
+        return False
+
     def __getattr__(self, name):
         if name not in self.raw:
             raise AttributeError
