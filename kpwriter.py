@@ -36,5 +36,11 @@ class KpWriter:
         if not otp_url:
             otp_url = "otpauth://totp/Sample:username?secret={}&algorithm=SHA1&digits=6&period=30&issuer=Sample".format(quote_plus(init_string))
         # TODO: Support multiple / don't overwrite
-        self.current_entry.set_custom_property("TimeOtp-Secret-Base32", init_string)
-        self.current_entry.set_custom_property("otp", otp_url)
+        self.set_prop("TimeOtp-Secret-Base32", init_string, True)
+        self.set_prop("otp", otp_url)
+
+    def set_prop(self, key, value, protected=False):
+        self.current_entry.set_custom_property(key, value)
+        if protected:
+            # https://github.com/libkeepass/pykeepass/issues/89
+            self.current_entry._element.xpath('String[Key[text()="{}"]]/Value'.format(key))[0].attrib["Protected"] = "True"
