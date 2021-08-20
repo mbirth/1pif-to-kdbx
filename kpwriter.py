@@ -32,12 +32,21 @@ class KpWriter:
     def set_tags(self, tag_list):
         self.current_entry.tags = tag_list
 
-    def add_totp(self, init_string, otp_url=None):
+    def add_totp(self, init_string, otp_url=None, title=""):
         if not otp_url:
             otp_url = "otpauth://totp/Sample:username?secret={}&algorithm=SHA1&digits=6&period=30&issuer=Sample".format(quote_plus(init_string))
-        # TODO: Support multiple / don't overwrite
-        self.set_prop("TimeOtp-Secret-Base32", init_string, True)
-        self.set_prop("otp", otp_url)
+
+        # It's possible to define multiple OTP-secrets in 1P7, so let's not lose one
+        suffix = ""
+        suffix_ctr = 1
+        while self.current_entry.get_custom_property("otp{}".format(suffix)):
+            suffix_ctr += 1
+            suffix = "_{}".format(suffix_ctr)
+
+        self.set_prop("TimeOtp-Secret-Base32{}".format(suffix), init_string, True)
+        self.set_prop("otp{}".format(suffix), otp_url)
+        if len(title) > 0:
+            self.set_prop("otp_title{}".format(suffix), title)
 
     def set_prop(self, key, value, protected=False):
         self.current_entry.set_custom_property(key, value)

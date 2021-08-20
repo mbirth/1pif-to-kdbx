@@ -88,6 +88,11 @@ for item in opif:
     # Tags
     kp.set_tags(item.get_tags())
 
+    # TOTP
+    totps = item.get_totps()
+    if totps:
+        for totp in totps:
+            kp.add_totp(totp[0], title=totp[1])
 
 
 
@@ -110,10 +115,6 @@ for item in opif:
         if new_password:
             entry.password = new_password
 
-    # TOTP
-    totp = item.get_totp()
-    if totp:
-        kp.add_totp(totp)
 
     # Other web fields
     if "fields" in secure:

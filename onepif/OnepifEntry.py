@@ -41,15 +41,21 @@ class OnepifEntry():
             return []
         return self.raw["openContents"]["tags"]
 
-    def get_totp(self):
+    def get_totps(self):
+        totp_fields = []
         if "sections" in self.raw["secureContents"]:
             for section in self.raw["secureContents"]["sections"]:
                 if "fields" not in section:
                     continue
                 for field in section["fields"]:
                     if field["n"][:5] == "TOTP_":
-                        return field["v"]
-        return None
+                        totp_fields.append([
+                            field["v"],
+                            field["t"],   # Custom title, if set (isn't displayed in 1P)
+                        ])
+        if len(totp_fields) == 0:
+            return None
+        return totp_fields
 
     def is_trash(self):
         if "trashed" in self.raw:
