@@ -46,18 +46,6 @@ def getField(item, designation):
     return None
 
 
-def getTotp(item):
-    secure = item["secureContents"]
-    if "sections" in secure:
-        for section in secure["sections"]:
-            if not "fields" in section:
-                continue
-            for field in section["fields"]:
-                if field["t"] == "totp":
-                    return field["v"]
-    return None
-
-
 ICON_MAP = {
     "112": "GEAR",   # API Credential
     "wallet.financial.BankAccountUS": "DOLLAR_SIGN",   # Bank Account
@@ -83,7 +71,7 @@ ICON_MAP = {
 
 for item in opif:
 
-    # Make sure target group exists
+    # Determine group/folder
     item_type_name = item.type_name
     target_group_name = "{}s".format(item_type_name)   # plural for group
 
@@ -93,19 +81,18 @@ for item in opif:
     # Add entry to KeePass
     entry = kp.add_entry(target_group_name, item["title"])
 
-    # Set icon
+    # Icon
     kp_icon = ICON_MAP[item.type]
-    if kp_icon in dir(pykeepass.icons):
-        kp_icon_id = getattr(pykeepass.icons, kp_icon)
-    else:
-        # FIXME: Assume kp_icon is already ID, needed b/c icon 12 is missing from pykeepass.icons
-        kp_icon_id = kp_icon
-    entry.icon = kp_icon_id
-
-    secure = item["secureContents"]
+    kp.set_icon(kp_icon)
 
     # Tags
-    entry.tags = item.get_tags()
+    kp.set_tags(item.get_tags())
+
+
+
+
+
+    secure = item["secureContents"]
 
     # Username
     if "username" in secure:
@@ -124,10 +111,9 @@ for item in opif:
             entry.password = new_password
 
     # TOTP
-    totp = getTotp(item)
+    totp = item.get_totp()
     if totp:
-        entry.set_custom_property("TimeOtp-Secret-Base32", totp)
-        entry.set_custom_property("otp", "otpauth://totp/Sample:username?secret={}&algorithm=SHA1&digits=6&period=30&issuer=Sample".format(quote_plus(totp)))
+        kp.add_totp(totp)
 
     # Other web fields
     if "fields" in secure:
