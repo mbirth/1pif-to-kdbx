@@ -53,6 +53,8 @@ class KpWriter:
         if not self.current_entry.url:
             self.current_entry.url = url
         else:
+            if url == self.current_entry.url:
+                return False
             # https://github.com/keepassxreboot/keepassxc/pull/3558
             suffix = ""
             suffix_ctr = 0
