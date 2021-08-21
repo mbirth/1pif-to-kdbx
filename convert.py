@@ -2,6 +2,7 @@
 
 import argparse
 import datetime
+import yaml
 import onepif
 import kpwriter
 
@@ -43,86 +44,8 @@ def getField(item, designation):
     return None
 
 
-# Mapping of 1P types for best conversion
-RECORD_MAP = {
-    "112": {
-        # API Credential
-        "icon": "GEAR",
-    },
-    "wallet.financial.BankAccountUS": {
-        # Bank Account
-        "icon": "DOLLAR_SIGN",
-    },
-    "wallet.financial.CreditCard": {
-        # Credit Card
-        "icon": "DOLLAR_SIGN",
-    },
-    "wallet.computer.Database": {
-        # Database
-        "icon": "SERVER",
-    },
-    # Not exported: Document
-    "wallet.government.DriversLicense": {
-        # Driver License
-        "icon": "BUSINESS_CARD",
-    },
-    "wallet.onlineservices.Email.v2": {
-        # Email Account
-        "icon": "ENVELOPE",
-    },
-    "identities.Identity": {
-        # Identity
-        "icon": "BUSINESS_CARD",
-    },
-    "webforms.WebForm": {
-        # Login
-        "icon": "MANAGER",
-    },
-    "113": {
-        # Medical Record
-        "icon": "WARNING_SIGN",
-    },
-    "wallet.membership.Membership": {
-        # Membership
-        "icon": "BUSINESS_CARD",
-    },
-    "wallet.government.HuntingLicense": {
-        # Outdoor License
-        "icon": "BUSINESS_CARD",
-    },
-    "wallet.government.Passport": {
-        # Passport
-        "icon": "BUSINESS_CARD",
-    },
-    "passwords.Password": {
-        # Password
-        "icon": "KEY",
-    },
-    "wallet.membership.RewardProgram": {
-        # Reward Program
-        "icon": "PERCENT_SIGN",
-    },
-    "securenotes.SecureNote": {
-        # Secure Note
-        "icon": "POST_IT",
-    },
-    "wallet.computer.UnixServer": {
-        # Server
-        "icon": "SERVER_2",
-    },
-    "wallet.government.SsnUS": {
-        # Social Security Number
-        "icon": "BUSINESS_CARD",
-    },
-    "wallet.computer.License": {
-        # Software License
-        "icon": "CARDBOARD",
-    },
-    "wallet.computer.Router": {
-        # Wireless Router
-        "icon": "12",
-    },
-}
+# Load record mappings from Yaml file
+RECORD_MAP = yaml.load(open("mappings.yml", "rt"))
 
 for item in opif:
 

@@ -1,0 +1,79 @@
+# Mapping of 1P types for best conversion
+
+# API Credential
+"112":
+    icon: GEAR
+
+# Bank Account
+wallet.financial.BankAccountUS:
+    icon: DOLLAR_SIGN
+
+# Credit Card
+wallet.financial.CreditCard:
+    icon: DOLLAR_SIGN
+
+# Database
+wallet.computer.Database:
+    icon: SERVER
+
+# Not exported: Document
+# Driver License
+wallet.government.DriversLicense:
+    icon: BUSINESS_CARD
+
+# Email Account
+wallet.onlineservices.Email.v2:
+    icon: ENVELOPE
+
+# Identity
+identities.Identity:
+    icon: BUSINESS_CARD
+
+# Login
+webforms.WebForm:
+    icon: MANAGER
+
+# Medical Record
+"113":
+    icon: WARNING_SIGN
+
+# Membership
+wallet.membership.Membership:
+    icon: BUSINESS_CARD
+
+# Outdoor License
+wallet.government.HuntingLicense:
+    icon: BUSINESS_CARD
+
+# Passport
+wallet.government.Passport:
+    icon: BUSINESS_CARD
+
+# Password
+passwords.Password:
+    icon: KEY
+
+# Reward Program
+wallet.membership.RewardProgram:
+    icon: PERCENT_SIGN
+
+# Secure Note
+securenotes.SecureNote:
+    icon: POST_IT
+
+# Server
+wallet.computer.UnixServer:
+    icon: SERVER_2
+
+# Social Security Number
+wallet.government.SsnUS:
+    icon: BUSINESS_CARD
+
+# Software License
+wallet.computer.License:
+    icon: CARDBOARD
+
+# Wireless Router
+wallet.computer.Router:
+    icon: "12"
+
