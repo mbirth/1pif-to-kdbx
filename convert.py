@@ -5,10 +5,9 @@ import datetime
 import json
 import onepif
 import kpwriter
-import pykeepass.icons
 
 from os.path import splitext
-from urllib.parse import urlparse, quote_plus
+from urllib.parse import urlparse
 
 parser = argparse.ArgumentParser(description="Convert 1Password 1PIF exports into a KeePass KDBX file.")
 parser.add_argument("inpath", metavar="input.1pif", help="1Password export file/folder")
@@ -46,27 +45,85 @@ def getField(item, designation):
     return None
 
 
-ICON_MAP = {
-    "112": "GEAR",   # API Credential
-    "wallet.financial.BankAccountUS": "DOLLAR_SIGN",   # Bank Account
-    "wallet.financial.CreditCard": "DOLLAR_SIGN",   # Credit Card
-    "wallet.computer.Database": "SERVER",   # Database
+# Mapping of 1P types for best conversion
+RECORD_MAP = {
+    "112": {
+        # API Credential
+        "icon": "GEAR",
+    },
+    "wallet.financial.BankAccountUS": {
+        # Bank Account
+        "icon": "DOLLAR_SIGN",
+    },
+    "wallet.financial.CreditCard": {
+        # Credit Card
+        "icon": "DOLLAR_SIGN",
+    },
+    "wallet.computer.Database": {
+        # Database
+        "icon": "SERVER",
+    },
     # Not exported: Document
-    "wallet.government.DriversLicense": "BUSINESS_CARD",   # Driver License
-    "wallet.onlineservices.Email.v2": "ENVELOPE",   # Email Account
-    "identities.Identity": "BUSINESS_CARD",   # Identity
-    "webforms.WebForm": "MANAGER",   # Login
-    "113": "WARNING_SIGN",   # Medical Record
-    "wallet.membership.Membership": "BUSINESS_CARD",   # Membership
-    "wallet.government.HuntingLicense": "BUSINESS_CARD",   # Outdoor License
-    "wallet.government.Passport": "BUSINESS_CARD",   # Passport
-    "passwords.Password": "KEY",   # Password
-    "wallet.membership.RewardProgram": "PERCENT_SIGN",   # Reward Program
-    "securenotes.SecureNote": "POST_IT",   # Secure Note
-    "wallet.computer.UnixServer": "SERVER_2",   # Server
-    "wallet.government.SsnUS": "BUSINESS_CARD",   # Social Security Number
-    "wallet.computer.License": "CARDBOARD",   # Software License
-    "wallet.computer.Router": "12",   # Wireless Router
+    "wallet.government.DriversLicense": {
+        # Driver License
+        "icon": "BUSINESS_CARD",
+    },
+    "wallet.onlineservices.Email.v2": {
+        # Email Account
+        "icon": "ENVELOPE",
+    },
+    "identities.Identity": {
+        # Identity
+        "icon": "BUSINESS_CARD",
+    },
+    "webforms.WebForm": {
+        # Login
+        "icon": "MANAGER",
+    },
+    "113": {
+        # Medical Record
+        "icon": "WARNING_SIGN",
+    },
+    "wallet.membership.Membership": {
+        # Membership
+        "icon": "BUSINESS_CARD",
+    },
+    "wallet.government.HuntingLicense": {
+        # Outdoor License
+        "icon": "BUSINESS_CARD",
+    },
+    "wallet.government.Passport": {
+        # Passport
+        "icon": "BUSINESS_CARD",
+    },
+    "passwords.Password": {
+        # Password
+        "icon": "KEY",
+    },
+    "wallet.membership.RewardProgram": {
+        # Reward Program
+        "icon": "PERCENT_SIGN",
+    },
+    "securenotes.SecureNote": {
+        # Secure Note
+        "icon": "POST_IT",
+    },
+    "wallet.computer.UnixServer": {
+        # Server
+        "icon": "SERVER_2",
+    },
+    "wallet.government.SsnUS": {
+        # Social Security Number
+        "icon": "BUSINESS_CARD",
+    },
+    "wallet.computer.License": {
+        # Software License
+        "icon": "CARDBOARD",
+    },
+    "wallet.computer.Router": {
+        # Wireless Router
+        "icon": "12",
+    },
 }
 
 for item in opif:
@@ -82,13 +139,13 @@ for item in opif:
     entry = kp.add_entry(target_group_name, item["title"])
 
     # Icon
-    kp_icon = ICON_MAP[item.type]
+    kp_icon = RECORD_MAP[item.type]["icon"]
     kp.set_icon(kp_icon)
 
     # Tags
     kp.set_tags(item.get_tags())
 
-    # TOTP
+    # TOTPs
     totps = item.get_totps()
     if totps:
         for totp in totps:
@@ -210,15 +267,7 @@ for item in opif:
     if "URLs" in secure:
         kp2idx = 0
         for u in secure["URLs"]:
-            if not entry.url:
-                entry.url = u["url"]
-            else:
-                # https://github.com/keepassxreboot/keepassxc/pull/3558
-                prop_name = "KP2A_URL"
-                if kp2idx > 0:
-                    prop_name += "_{}".format(kp2idx)
-                entry.set_custom_property(prop_name, u["url"])
-                kp2idx += 1
+            kp.add_url(u["url"])
             url = urlparse(u["url"])
             settings["Allow"].append(url.hostname)
             applySettings = True

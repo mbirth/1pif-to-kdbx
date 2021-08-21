@@ -48,6 +48,18 @@ class KpWriter:
         if len(title) > 0:
             self.set_prop("otp_title{}".format(suffix), title)
 
+    def add_url(self, url):
+        if not self.current_entry.url:
+            self.current_entry.url = url
+        else:
+            # https://github.com/keepassxreboot/keepassxc/pull/3558
+            suffix = ""
+            suffix_ctr = 0
+            while self.current_entry.get_custom_property("KP2A_URL{}".format(suffix)):
+                suffix_ctr += 1
+                suffix = "_{}".format(suffix_ctr)
+            self.set_prop("KP2A_URL{}".format(suffix), url)
+
     def set_prop(self, key, value, protected=False):
         self.current_entry.set_custom_property(key, value)
         if protected:
