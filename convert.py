@@ -2,12 +2,10 @@
 
 import argparse
 import datetime
-import json
 import onepif
 import kpwriter
 
 from os.path import splitext
-from urllib.parse import urlparse
 
 parser = argparse.ArgumentParser(description="Convert 1Password 1PIF exports into a KeePass KDBX file.")
 parser.add_argument("inpath", metavar="input.1pif", help="1Password export file/folder")
@@ -153,8 +151,18 @@ for item in opif:
 
 
 
-
     secure = item["secureContents"]
+
+    # URLs
+    if "location" in item:
+        kp.add_url(item["location"])
+    if "URLs" in secure:
+        for u in secure["URLs"]:
+            kp.add_url(u["url"])
+
+
+
+
 
     # Username
     if "username" in secure:
@@ -253,28 +261,6 @@ for item in opif:
     # Notes
     if "notesPlain" in secure:
         entry.notes = secure["notesPlain"]
-
-    # URLs
-    settings = {
-        "Allow": [],
-        "Deny": [],
-        "Realm": "",
-    }
-    applySettings = False
-
-    if "location" in item:
-        entry.url = item["location"]
-    if "URLs" in secure:
-        kp2idx = 0
-        for u in secure["URLs"]:
-            kp.add_url(u["url"])
-            url = urlparse(u["url"])
-            settings["Allow"].append(url.hostname)
-            applySettings = True
-
-    if applySettings:
-        settings["Allow"] = list(set(settings["Allow"]))
-        entry.set_custom_property("KeePassHttp Settings", json.dumps(settings))
 
     # Dates
     entry.ctime = datetime.datetime.fromtimestamp(item["createdAt"])

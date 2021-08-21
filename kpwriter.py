@@ -1,5 +1,6 @@
+import json
 import pykeepass.icons
-from urllib.parse import quote_plus
+from urllib.parse import quote_plus, urlparse
 from pykeepass import create_database
 
 
@@ -59,6 +60,21 @@ class KpWriter:
                 suffix_ctr += 1
                 suffix = "_{}".format(suffix_ctr)
             self.set_prop("KP2A_URL{}".format(suffix), url)
+
+        # KeePassHttp
+        current_settings = self.current_entry.get_custom_property("KeePassHttp Settings")
+        if current_settings:
+            current_settings = json.loads(current_settings)
+        else:
+            current_settings = {
+                "Allow": [],
+                "Deny": [],
+                "Realm": "",
+            }
+        parsed_url = urlparse(url)
+        current_settings["Allow"].append(parsed_url.hostname)
+        current_settings["Allow"] = list(set(current_settings["Allow"]))
+        self.set_prop("KeePassHttp Settings", json.dumps(current_settings))
 
     def set_prop(self, key, value, protected=False):
         self.current_entry.set_custom_property(key, value)
