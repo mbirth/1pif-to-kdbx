@@ -1,3 +1,4 @@
+import sys
 from datetime import datetime
 
 TYPES = {
@@ -74,7 +75,7 @@ class OnepifEntry():
 
     def convert_section_field_to_string(self, field_data: dict) -> str:
         kind = field_data["k"]
-        if kind in ["string", "concealed", "email", "menu", "cctype"]:
+        if kind in ["string", "concealed", "email", "phone", "URL", "menu", "cctype"]:
             return field_data["v"]
         elif kind == "date":
             return datetime.fromtimestamp(field_data["v"]).strftime("%Y-%m-%d")
@@ -99,6 +100,9 @@ class OnepifEntry():
             if addr["country"]:
                 result += addr["country"].upper()
             return result.strip()
+        elif kind == "reference":
+            print("WARNING: Links between items are not supported (entry: {} -> {}).".format(self.raw["title"], field_data["t"]), file=sys.stderr)
+            return field_data["t"]
 
         raise Exception("Unknown data kind in section fields: {}".format(kind))
         return field_data["v"]
@@ -117,6 +121,10 @@ class OnepifEntry():
 
     def parse_fields_into_dict(self, target_dict: dict, fields: list):
         for f in fields:
+            if f["type"] in ["C", "R"]:
+                # Skip unsupported fields
+                print("Ignoring checkbox/radiobuttons value in entry {}.".format(self.raw["title"]), file=sys.stderr)
+                continue
             if "value" not in f:
                 # Skip fields without data
                 continue
