@@ -115,7 +115,7 @@ class OnepifEntry():
                 continue
             propname = "{}: {}".format(sect_title, f["t"].title())
             if not sect_title:
-                propname = f["t"].title()
+                propname = f["t"]
             propval = self.convert_section_field_to_string(f)
             self.add_with_unique_key(target_dict, propname, propval)
 
@@ -128,7 +128,10 @@ class OnepifEntry():
             if "value" not in f:
                 # Skip fields without data
                 continue
-            propname = f["designation"]
+            if "designation" in f:
+                propname = f["designation"]
+            else:
+                propname = f["name"]
             propval = f["value"]
             if type(propval) is str:
                 # For some reason 1P sometimes exports 0x10 character for empty strings
