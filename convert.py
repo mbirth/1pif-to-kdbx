@@ -71,13 +71,16 @@ for item in opif:
 
     # URLs
     if "location" in props:
-        kp.add_url(item["location"])
+        kp.add_url(props["location"])
         fids_done.append("location")
         fids_done.append("locationKey")
     if "URLs" in props:
         for u in props["URLs"]:
             kp.add_url(u["url"])
         fids_done.append("URLs")
+    if "URL" in props:
+        kp.add_url(props["URL"])
+        fids_done.append("URL")
 
     # Tags
     kp.set_tags(item.get_tags())
