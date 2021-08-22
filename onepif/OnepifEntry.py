@@ -1,3 +1,5 @@
+from datetime import datetime
+
 TYPES = {
     "112": "API Credential",
     "wallet.financial.BankAccountUS": "Bank Account",
@@ -61,6 +63,102 @@ class OnepifEntry():
         if "trashed" in self.raw:
             return self.raw["trashed"]
         return False
+
+    def add_with_unique_key(self, prop_dict: dict, new_key: str, new_value):
+        suffix_ctr = 0
+        tmp_key = new_key
+        while tmp_key in prop_dict:
+            suffix_ctr += 1
+            tmp_key = "{}_{}".format(new_key, suffix_ctr)
+        prop_dict[tmp_key] = new_value
+
+    def convert_section_field_to_string(self, field_data: dict) -> str:
+        kind = field_data["k"]
+        if kind in ["string", "concealed", "email", "menu", "cctype"]:
+            return field_data["v"]
+        elif kind == "date":
+            return datetime.fromtimestamp(field_data["v"]).strftime("%Y-%m-%d")
+        elif kind == "monthYear":
+            month = field_data["v"] % 100
+            month_name = datetime.strptime(str(month), "%m").strftime("%b")
+            year = field_data["v"] // 100
+            return "{} {}".format(month_name, year)
+        elif kind == "address":
+            addr = field_data["v"]
+            result = ""
+            if addr["street"]:
+                result += addr["street"] + "\n"
+            if addr["city"]:
+                result += addr["city"] + "\n"
+            if addr["zip"]:
+                result += addr["zip"] + "\n"
+            if addr["state"]:
+                result += addr["state"] + "\n"
+            if addr["region"]:
+                result += addr["region"] + "\n"
+            if addr["country"]:
+                result += addr["country"].upper()
+            return result.strip()
+
+        raise Exception("Unknown data kind in section fields: {}".format(kind))
+        return field_data["v"]
+
+    def parse_section_into_dict(self, target_dict: dict, section: dict):
+        sect_title = section["title"]
+        for f in section["fields"]:
+            if "v" not in f:
+                # Skip fields without data
+                continue
+            propname = "{}: {}".format(sect_title, f["t"].title())
+            if not sect_title:
+                propname = f["t"].title()
+            propval = self.convert_section_field_to_string(f)
+            self.add_with_unique_key(target_dict, propname, propval)
+
+    def parse_fields_into_dict(self, target_dict: dict, fields: list):
+        for f in fields:
+            if "value" not in f:
+                # Skip fields without data
+                continue
+            propname = f["designation"]
+            propval = f["value"]
+            if f["type"] not in ["T", "P"]:
+                raise Exception("Unknown field type discovered: {}".format(f["type"]))
+            self.add_with_unique_key(target_dict, propname, propval)
+
+    def get_all_props(self) -> dict:
+        props = {}
+        for k, v in self.raw.items():
+            if k in ["openContents", "secureContents"]:
+                # handle open/secure groups of properties
+                for k2, v2 in v.items():
+                    if k2 == "sections":
+                        # handle section
+                        for s in v2:
+                            if "fields" not in s:
+                                # Skip empty sections
+                                continue
+                            self.parse_section_into_dict(props, s)
+                        continue
+                    elif k2 == "fields":
+                        # For some reason this differs from the "fields" in a section
+                        self.parse_fields_into_dict(props, v2)
+                        continue
+                    new_key2 = k2
+                    suffix_ctr2 = 0
+                    while new_key2 in props:
+                        suffix_ctr2 += 1
+                        new_key2 = "{}_{}".format(k2, suffix_ctr2)
+                    props[new_key2] = v2
+                continue
+            new_key = k
+            suffix_ctr = 0
+            while new_key in props:
+                suffix_ctr += 1
+                new_key = "{}_{}".format(k, suffix_ctr)
+            props[new_key] = v
+        # TODO: Maybe walk all keys and see if there's (xxx_dd), xxx_mm, xxx_yy and turn them into a date
+        return props
 
     def __getattr__(self, name):
         if name not in self.raw:

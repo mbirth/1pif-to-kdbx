@@ -1,79 +1,124 @@
+General:
+    # Properties that are to be ignored/not converted
+    ignored:
+        - contentsHash
+        - securityLevel
+        - typeName
+        - uuid
+
 # Mapping of 1P types for best conversion
 
 # API Credential
 "112":
     icon: GEAR
+    username: username
+    password: credential
 
 # Bank Account
 wallet.financial.BankAccountUS:
     icon: DOLLAR_SIGN
+    username: [iban, swift, routingNo, accountNo]
+    password: telephonePin
 
 # Credit Card
 wallet.financial.CreditCard:
     icon: DOLLAR_SIGN
+    username: ccnum
+    password: pin
 
 # Database
 wallet.computer.Database:
     icon: SERVER
+    username: username
+    password: password
 
 # Not exported: Document
 # Driver License
 wallet.government.DriversLicense:
     icon: BUSINESS_CARD
+    username: fullname
+    password: null
 
 # Email Account
 wallet.onlineservices.Email.v2:
     icon: ENVELOPE
+    username: pop_username
+    password: pop_password
 
 # Identity
 identities.Identity:
     icon: BUSINESS_CARD
+    username: null
+    password: null
 
 # Login
 webforms.WebForm:
     icon: MANAGER
+    username: username
+    password: password
 
 # Medical Record
 "113":
     icon: WARNING_SIGN
+    username: null
+    password: null
 
 # Membership
 wallet.membership.Membership:
     icon: BUSINESS_CARD
+    username: membership_no
+    password: pin
 
 # Outdoor License
 wallet.government.HuntingLicense:
     icon: BUSINESS_CARD
+    username: name
+    password: null
 
 # Passport
 wallet.government.Passport:
     icon: BUSINESS_CARD
+    username: number
+    password: null
 
 # Password
 passwords.Password:
     icon: KEY
+    username: null
+    password: password
 
 # Reward Program
 wallet.membership.RewardProgram:
     icon: PERCENT_SIGN
+    username: company_name
+    password: pin
 
 # Secure Note
 securenotes.SecureNote:
     icon: POST_IT
+    username: null
+    password: null
 
 # Server
 wallet.computer.UnixServer:
     icon: SERVER_2
+    username: username
+    password: password
 
 # Social Security Number
 wallet.government.SsnUS:
     icon: BUSINESS_CARD
+    username: name
+    password: number
 
 # Software License
 wallet.computer.License:
     icon: CARDBOARD
+    username: reg_name
+    password: reg_code
 
 # Wireless Router
 wallet.computer.Router:
     icon: "12"
-
+    username: network_name
+    password: wireless_password
