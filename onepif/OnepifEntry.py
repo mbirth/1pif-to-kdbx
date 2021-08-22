@@ -184,24 +184,3 @@ class OnepifEntry():
             props[new_key] = v
         # TODO: Maybe walk all keys and see if there's (xxx_dd), xxx_mm, xxx_yy and turn them into a date
         return props
-
-    def __getattr__(self, name):
-        if name not in self.raw:
-            raise AttributeError
-        return self.raw[name]
-
-    def __getitem__(self, key):
-        if self.__missing__(key):
-            raise KeyError
-        return self.raw[key]
-
-    def __contains__(self, item):
-        return item in self.raw
-
-    def __missing__(self, key):
-        return key not in self.raw
-
-    def get(self, key):
-        if key not in self.raw:
-            return None
-        return self.raw[key]

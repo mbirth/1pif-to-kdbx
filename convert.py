@@ -64,7 +64,7 @@ for item in opif:
         target_group_name = "Recycle Bin"
 
     # Add entry to KeePass
-    entry = kp.add_entry(target_group_name, item["title"])
+    entry = kp.add_entry(target_group_name, props["title"])
     fids_done.append("title")
 
     # UUID - memorise for later linking?
@@ -104,8 +104,8 @@ for item in opif:
         fids_done.append("notesPlain")
 
     # Dates
-    entry.ctime = datetime.datetime.fromtimestamp(item["createdAt"])
-    entry.mtime = datetime.datetime.fromtimestamp(item["updatedAt"])
+    entry.ctime = datetime.datetime.fromtimestamp(props["createdAt"])
+    entry.mtime = datetime.datetime.fromtimestamp(props["updatedAt"])
     fids_done.append("createdAt")
     fids_done.append("updatedAt")
 
@@ -137,26 +137,15 @@ for item in opif:
 
 
 
-   # TODO: scope: Never = never suggest in browser
+   # TODO: scope: Never = never suggest in browser (i.e. don't add KPH fields)
 
-    secure = item["secureContents"]
-
-
-
+    secure = item.raw["secureContents"]
     # Other web fields
     if "fields" in secure:
         for field in secure["fields"]:
             d = field.get("designation")
             if d != "username" and d != "password":
-                entry.set_custom_property("Web field: {}".format(field["name"]), field["value"])
-
-    # Find URL in fields
-    if not entry.url:
-        if "htmlAction" in secure:
-            entry.url = secure["htmlAction"]
-
-
-
+                entry.set_custom_property("KPH: {}".format(field["name"]), field["value"])
 
     # AFTER ALL OTHER PROCESSING IS DONE: Password history
     if "passwordHistory" in props:
@@ -170,6 +159,5 @@ for item in opif:
         # Restore original values
         entry.password = original_password
         entry.mtime = original_mtime
-
 
 kp.save()
