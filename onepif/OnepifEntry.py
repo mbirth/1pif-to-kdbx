@@ -28,20 +28,20 @@ class OnepifEntry():
         self.raw = data
         self.set_type(data["typeName"])
 
-    def set_type(self, new_type):
+    def set_type(self, new_type: str):
         if new_type not in TYPES:
             raise Exception("Unknown record type: {}".format(new_type))
         self.type = new_type
         self.type_name = TYPES[new_type]
 
-    def get_tags(self):
+    def get_tags(self) -> list:
         if "openContents" not in self.raw:
             return []
         if "tags" not in self.raw["openContents"]:
             return []
         return self.raw["openContents"]["tags"]
 
-    def get_totps(self):
+    def get_totps(self) -> list:
         totp_fields = []
         if "sections" in self.raw["secureContents"]:
             for section in self.raw["secureContents"]["sections"]:
@@ -57,7 +57,7 @@ class OnepifEntry():
             return None
         return totp_fields
 
-    def is_trash(self):
+    def is_trash(self) -> bool:
         if "trashed" in self.raw:
             return self.raw["trashed"]
         return False
