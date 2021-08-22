@@ -146,6 +146,11 @@ class OnepifEntry():
             if k in ["openContents", "secureContents"]:
                 # handle open/secure groups of properties
                 for k2, v2 in v.items():
+                    if k2 == "unknown_details":
+                        # special handling aka. black magic
+                        if "sections" in v2:
+                            k2 = "sections"
+                            v2 = v2["sections"]
                     if k2 == "sections":
                         # handle section
                         for s in v2:
