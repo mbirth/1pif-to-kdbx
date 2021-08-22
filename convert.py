@@ -47,6 +47,8 @@ def getField(item, designation):
 # Load record mappings from Yaml file
 RECORD_MAP = yaml.load(open("mappings.yml", "rt"), Loader=yaml.SafeLoader)
 
+uuid_map = {}
+
 for item in opif:
 
     props = item.get_all_props()
@@ -64,6 +66,10 @@ for item in opif:
     # Add entry to KeePass
     entry = kp.add_entry(target_group_name, item["title"])
     fids_done.append("title")
+
+    # UUID - memorise for later linking?
+    uuid_map[props["uuid"]] = entry.uuid
+    fids_done.append("uuid")
 
     # Icon
     kp_icon = RECORD_MAP[item.type]["icon"]
