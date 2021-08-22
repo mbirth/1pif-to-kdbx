@@ -130,7 +130,7 @@ class OnepifEntry():
                 continue
             propname = f["designation"]
             propval = f["value"]
-            if f["type"] not in ["T", "P"]:
+            if f["type"] not in ["T", "P", "E"]:
                 raise Exception("Unknown field type discovered: {}".format(f["type"]))
             self.add_with_unique_key(target_dict, propname, propval)
 
