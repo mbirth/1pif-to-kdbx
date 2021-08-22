@@ -49,6 +49,11 @@ RECORD_MAP = yaml.load(open("mappings.yml", "rt"))
 
 for item in opif:
 
+    props = item.get_all_props()
+
+    # Fields that are not to be added as custom properties
+    fids_done = ["passwordHistory"]
+
     # Determine group/folder
     item_type_name = item.type_name
     target_group_name = "{}s".format(item_type_name)   # plural for group
@@ -58,13 +63,25 @@ for item in opif:
 
     # Add entry to KeePass
     entry = kp.add_entry(target_group_name, item["title"])
+    fids_done.append("title")
 
     # Icon
     kp_icon = RECORD_MAP[item.type]["icon"]
     kp.set_icon(kp_icon)
 
+    # URLs
+    if "location" in props:
+        kp.add_url(item["location"])
+        fids_done.append("location")
+        fids_done.append("locationKey")
+    if "URLs" in props:
+        for u in props["URLs"]:
+            kp.add_url(u["url"])
+        fids_done.append("URLs")
+
     # Tags
     kp.set_tags(item.get_tags())
+    fids_done.append("tags")
 
     # TOTPs
     totps = item.get_totps()
@@ -72,36 +89,49 @@ for item in opif:
         for totp in totps:
             kp.add_totp(totp[0], title=totp[1])
 
+    # Notes
+    if "notesPlain" in props:
+        entry.notes = props["notesPlain"]
+        fids_done.append("notesPlain")
 
+    # Dates
+    entry.ctime = datetime.datetime.fromtimestamp(item["createdAt"])
+    entry.mtime = datetime.datetime.fromtimestamp(item["updatedAt"])
+    fids_done.append("createdAt")
+    fids_done.append("updatedAt")
+
+    # Apply mappings from mappings.yml
+    for map_field in ["username", "password"]:
+        seek_fields = RECORD_MAP[item.type][map_field]
+        if not seek_fields:
+            continue
+        if type(seek_fields) is str:
+            seek_fields = [seek_fields]
+        for fid in seek_fields:
+            if fid in props:
+                setattr(entry, map_field, props[fid])
+                fids_done.append(fid)
+                break
+
+    # Set remaining properties
+    for k, v in props.items():
+        if k in ["Password"]:
+            # Forbidden name
+            continue
+        if k in RECORD_MAP["General"]["ignored"]:
+            # Skip ignored fields
+            continue
+        if k in fids_done:
+            # Skip fields processed elsewhere
+            continue
+        kp.set_prop(k, str(v))
+
+
+
+   # TODO: scope: Never = never suggest in browser
 
     secure = item["secureContents"]
 
-    # URLs
-    if "location" in item:
-        kp.add_url(item["location"])
-    if "URLs" in secure:
-        for u in secure["URLs"]:
-            kp.add_url(u["url"])
-
-
-
-
-
-    # Username
-    if "username" in secure:
-        entry.username = secure["username"]
-    else:
-        username = getField(item, "username")
-        if username:
-            entry.username = username
-
-    # Password
-    if "password" in secure:
-        entry.password = secure["password"]
-    else:
-        new_password = getField(item, "password")
-        if new_password:
-            entry.password = new_password
 
 
     # Other web fields
@@ -111,82 +141,26 @@ for item in opif:
             if d != "username" and d != "password":
                 entry.set_custom_property("Web field: {}".format(field["name"]), field["value"])
 
-    # Password history
-    if "passwordHistory" in secure:
-        for p in secure["passwordHistory"]:
-            d = datetime.datetime.fromtimestamp(p["time"])
-            entry.set_custom_property("Password history ({})".format(d), p["value"])
-
     # Find URL in fields
     if not entry.url:
         if "htmlAction" in secure:
             entry.url = secure["htmlAction"]
 
-    # Membership fields
-    if "membership_no" in secure and not entry.username:
-        entry.username = secure["membership_no"]
 
-    # Passport fields
-    if "number" in secure and not entry.username:
-        entry.username = secure["number"]
 
-    # Router fields
-    if "network_name" in secure and not entry.username:
-        entry.username = secure["network_name"]
-    if "wireless_password" in secure and not entry.password:
-        entry.password = secure["wireless_password"]
 
-    # Bank account
-    if "iban" in secure and not entry.username:
-        entry.username = secure["iban"]
-    if "swift" in secure and not entry.username:
-        entry.username = secure["swift"]
-    if "routingNo" in secure and not entry.username:
-        entry.username = secure["routingNo"]
-    if "accountNo" in secure and not entry.username:
-        entry.username = secure["accountNo"]
-    if "telephonePin" in secure and not entry.password:
-        entry.password = secure["telephonePin"]
+    # AFTER ALL OTHER PROCESSING IS DONE: Password history
+    if "passwordHistory" in props:
+        original_password = entry.password
+        original_mtime = entry.mtime
+        for p in props["passwordHistory"]:
+            d = datetime.datetime.fromtimestamp(p["time"])
+            entry.mtime = d
+            entry.password = p["value"]
+            entry.save_history()
+        # Restore original values
+        entry.password = original_password
+        entry.mtime = original_mtime
 
-    # Credit card
-    if "ccnum" in secure and not entry.username:
-        entry.username = secure["ccnum"]
-    if "pin" in secure and not entry.password:
-        entry.password = secure["pin"]
-
-    # Sections
-    if "sections" in secure:
-        for s in secure["sections"]:
-            t = s["title"]
-            if "fields" in s:
-                for f in s["fields"]:
-                    v = f.get("v")
-                    if not v:
-                        continue
-                    k = f["k"]
-                    ft = "{} - {}".format(t, f["t"])
-                    if t == "":
-                        ft = f["t"]
-                    if ft == "URL":
-                        # Reserved!
-                        ft = "URL_"
-                    if k in ["string", "concealed", "menu", "cctype", "monthYear", "email"]:
-                        entry.set_custom_property(ft, str(v))
-                    elif k == "date":
-                        d = datetime.datetime.fromtimestamp(v)
-                        entry.set_custom_property(ft, str(d))
-                    elif k == "address":
-                        # needs special handling!
-                        pass   # for now
-                    else:
-                        raise Exception("Unknown k: {}".format(k))
-
-    # Notes
-    if "notesPlain" in secure:
-        entry.notes = secure["notesPlain"]
-
-    # Dates
-    entry.ctime = datetime.datetime.fromtimestamp(item["createdAt"])
-    entry.mtime = datetime.datetime.fromtimestamp(item["updatedAt"])
 
 kp.save()
