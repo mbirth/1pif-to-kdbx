@@ -45,7 +45,7 @@ def getField(item, designation):
 
 
 # Load record mappings from Yaml file
-RECORD_MAP = yaml.load(open("mappings.yml", "rt"))
+RECORD_MAP = yaml.load(open("mappings.yml", "rt"), Loader=yaml.SafeLoader)
 
 for item in opif:
 
