@@ -32,13 +32,13 @@ Basic 1Password 1PIF structure
         'fields': [
             {
                 'designation': 'username',
-                'name': 'username',
+                'name': 'name_of_username_field_on_website',
                 'type': 'T',
                 'value': 'john.doe'
             },
             {
                 'designation': 'password',
-                'name': 'password',
+                'name': 'name_of_password_field_on_website',
                 'type': 'P',
                 'value': 'ultrasecurepassword'
             }

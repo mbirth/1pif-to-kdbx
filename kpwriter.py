@@ -16,7 +16,13 @@ class KpWriter:
             # TODO: Handle nested groups?
             group = self.kp.add_group(self.kp.root_group, dest_group_name)
 
-        self.current_entry = self.kp.add_entry(group, title, "", "")
+        suffix_ctr = 1
+        new_title = title
+        while self.kp.find_entries(title=new_title, group=group):
+            suffix_ctr += 1
+            new_title = "{} - {}".format(title, suffix_ctr)
+
+        self.current_entry = self.kp.add_entry(group, new_title, "", "")
         return self.current_entry
 
     def save(self):
