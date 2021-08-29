@@ -32,18 +32,6 @@ opif = onepif.OnepifReader("{}/data.1pif".format(args.inpath))
 print("Output file: {}".format(args.outfile))
 kp = kpwriter.KpWriter(args.outfile, "test")
 
-
-def getField(item, designation):
-    secure = item["secureContents"]
-    if "fields" in secure:
-        for field in secure["fields"]:
-            d = field.get("designation")
-            if d == designation:
-                return field["value"]
-
-    return None
-
-
 # Load record mappings from Yaml file
 RECORD_MAP = yaml.load(open("mappings.yml", "rt"), Loader=yaml.SafeLoader)
 

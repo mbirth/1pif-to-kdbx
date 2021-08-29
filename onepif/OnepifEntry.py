@@ -71,6 +71,9 @@ class OnepifEntry():
         while tmp_key in prop_dict:
             suffix_ctr += 1
             tmp_key = "{}_{}".format(new_key, suffix_ctr)
+        if type(new_value) is str:
+            # For some reason 1P sometimes exports 0x10 character for empty strings
+            new_value = new_value.replace("\x10", "")
         prop_dict[tmp_key] = new_value
 
     def convert_section_field_to_string(self, field_data: dict) -> str:
@@ -133,9 +136,6 @@ class OnepifEntry():
             else:
                 propname = f["name"]
             propval = f["value"]
-            if type(propval) is str:
-                # For some reason 1P sometimes exports 0x10 character for empty strings
-                propval = propval.replace("\x10", "")
             if f["type"] not in ["T", "P", "E"]:
                 raise Exception("Unknown field type discovered: {}".format(f["type"]))
             self.add_with_unique_key(target_dict, propname, propval)
@@ -163,24 +163,10 @@ class OnepifEntry():
                         # For some reason this differs from the "fields" in a section
                         self.parse_fields_into_dict(props, v2)
                         continue
-                    new_key2 = k2
-                    suffix_ctr2 = 0
-                    while new_key2 in props:
-                        suffix_ctr2 += 1
-                        new_key2 = "{}_{}".format(k2, suffix_ctr2)
-                    if type(v2) is str:
-                        # For some reason 1P sometimes exports 0x10 character for empty strings
-                        v2 = v2.replace("\x10", "")
-                    props[new_key2] = v2
+                    # Handle all other values (most probably string or int)
+                    self.add_with_unique_key(props, k2, v2)
                 continue
-            new_key = k
-            suffix_ctr = 0
-            while new_key in props:
-                suffix_ctr += 1
-                new_key = "{}_{}".format(k, suffix_ctr)
-            if type(v) is str:
-                # For some reason 1P sometimes exports 0x10 character for empty strings
-                v = v.replace("\x10", "")
-            props[new_key] = v
+            # Handle all other values
+            self.add_with_unique_key(props, k, v)
         # TODO: Maybe walk all keys and see if there's (xxx_dd), xxx_mm, xxx_yy and turn them into a date
         return props
