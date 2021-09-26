@@ -1,5 +1,5 @@
 import sys
-from datetime import datetime
+from . import OnepifEntryProperty as oep
 
 TYPES = {
     "112": "API Credential",
@@ -24,12 +24,16 @@ TYPES = {
     "wallet.computer.Router": "Wireless Router",
 }
 
+ANSI_RED = u"\u001b[1;31m"
+ANSI_RESET = u"\u001b[0m"
 
 class OnepifEntry():
 
     def __init__(self, data):
         self.raw = data
         self.set_type(data["typeName"])
+        self.properties = []
+        self.parse()
 
     def set_type(self, new_type: str):
         if new_type not in TYPES:
@@ -65,6 +69,27 @@ class OnepifEntry():
             return self.raw["trashed"]
         return False
 
+    def add_property(self, property: oep.OnepifEntryProperty):
+        self.properties.append(property)
+
+    def get_property_keys(self):
+        keys = []
+        for p in self.properties:
+            keys.append(p.name)
+        keys = list(set(keys))
+        return keys
+
+    def get_property(self, key: str):
+        props = []
+        for p in self.properties:
+            if p.name == key:
+                props.append(p)
+        if not props:
+            return None
+        elif len(props) > 1:
+            print("{}Warning: Multiple properties matching '{}' found: {}. Ignoring all but the first.{}".format(ANSI_RED, key, repr(props), ANSI_RESET))
+        return props[0]
+
     def add_with_unique_key(self, prop_dict: dict, new_key: str, new_value):
         suffix_ctr = 0
         tmp_key = new_key
@@ -76,72 +101,29 @@ class OnepifEntry():
             new_value = new_value.replace("\x10", "")
         prop_dict[tmp_key] = new_value
 
-    def convert_section_field_to_string(self, field_data: dict) -> str:
-        kind = field_data["k"]
-        if kind in ["string", "concealed", "email", "phone", "URL", "menu", "cctype"]:
-            return field_data["v"]
-        elif kind == "date":
-            return datetime.fromtimestamp(field_data["v"]).strftime("%Y-%m-%d")
-        elif kind == "monthYear":
-            month = field_data["v"] % 100
-            month_name = datetime.strptime(str(month), "%m").strftime("%b")
-            year = field_data["v"] // 100
-            return "{} {}".format(month_name, year)
-        elif kind == "address":
-            addr = field_data["v"]
-            result = ""
-            if addr["street"]:
-                result += addr["street"] + "\n"
-            if addr["city"]:
-                result += addr["city"] + "\n"
-            if addr["zip"]:
-                result += addr["zip"] + "\n"
-            if addr["state"]:
-                result += addr["state"] + "\n"
-            if addr["region"]:
-                result += addr["region"] + "\n"
-            if addr["country"]:
-                result += addr["country"].upper()
-            return result.strip()
-        elif kind == "reference":
-            print("WARNING: Links between items are not supported (entry: {} -> {}).".format(self.raw["title"], field_data["t"]), file=sys.stderr)
-            return field_data["t"]
-
-        raise Exception("Unknown data kind in section fields: {}".format(kind))
-        return field_data["v"]
-
-    def parse_section_into_dict(self, target_dict: dict, section: dict):
+    def parse_section(self, section: dict):
         sect_title = section["title"]
         for f in section["fields"]:
             if "v" not in f:
                 # Skip fields without data
                 continue
-            propname = "{}: {}".format(sect_title, f["t"].title())
-            if not sect_title:
-                propname = f["t"]
-            propval = self.convert_section_field_to_string(f)
-            self.add_with_unique_key(target_dict, propname, propval)
+            prop = oep.OnepifEntryProperty.from_sectionfield(f, sect_title)
+            self.add_property(prop)
 
-    def parse_fields_into_dict(self, target_dict: dict, fields: list):
+    def parse_fields(self, fields: list):
         for f in fields:
-            if f["type"] in ["C", "R"]:
-                # Skip unsupported fields
-                print("Ignoring checkbox/radiobuttons value in entry {}.".format(self.raw["title"]), file=sys.stderr)
-                continue
-            if "value" not in f:
-                # Skip fields without data
-                continue
-            if "designation" in f:
-                propname = f["designation"]
-            else:
-                propname = f["name"]
-            propval = f["value"]
-            if f["type"] not in ["T", "P", "E"]:
-                raise Exception("Unknown field type discovered: {}".format(f["type"]))
-            self.add_with_unique_key(target_dict, propname, propval)
+            prop = oep.OnepifEntryProperty.from_webfield(f)
+            if prop:
+                self.add_property(prop)
 
-    def get_all_props(self) -> dict:
-        props = {}
+    def add_simple_prop(self, key: str, value):
+        if value == "\x10":
+            # this seems to be an "empty" indicator, so skip this
+            return False
+        prop = oep.OnepifEntryProperty(key, value)
+        self.add_property(prop)
+
+    def parse(self):
         for k, v in self.raw.items():
             if k in ["openContents", "secureContents"]:
                 # handle open/secure groups of properties
@@ -157,16 +139,15 @@ class OnepifEntry():
                             if "fields" not in s:
                                 # Skip empty sections
                                 continue
-                            self.parse_section_into_dict(props, s)
+                            self.parse_section(s)
                         continue
                     elif k2 == "fields":
                         # For some reason this differs from the "fields" in a section
-                        self.parse_fields_into_dict(props, v2)
+                        self.parse_fields(v2)
                         continue
                     # Handle all other values (most probably string or int)
-                    self.add_with_unique_key(props, k2, v2)
+                    self.add_simple_prop(k2, v2)
                 continue
             # Handle all other values
-            self.add_with_unique_key(props, k, v)
+            self.add_simple_prop(k, v)
         # TODO: Maybe walk all keys and see if there's (xxx_dd), xxx_mm, xxx_yy and turn them into a date
-        return props

@@ -39,7 +39,6 @@ uuid_map = {}
 
 for item in opif:
 
-    props = item.get_all_props()
 
     # Fields that are not to be added as custom properties
     fids_done = ["passwordHistory"]
@@ -52,11 +51,12 @@ for item in opif:
         target_group_name = "Recycle Bin"
 
     # Add entry to KeePass
-    entry = kp.add_entry(target_group_name, props["title"])
+    entry = kp.add_entry(target_group_name, item.get_property("title").value)
     fids_done.append("title")
 
-    # UUID - memorise for later linking?
-    uuid_map[props["uuid"]] = entry.uuid
+    # UUID - memorise for later linking (if supported by output format)?
+    uuid = item.get_property("uuid").value
+    uuid_map[uuid] = entry.uuid
     fids_done.append("uuid")
 
     # Icon
@@ -64,16 +64,19 @@ for item in opif:
     kp.set_icon(kp_icon)
 
     # URLs
-    if "location" in props:
-        kp.add_url(props["location"])
+    location = item.get_property("location")
+    if location:
+        kp.add_url(location.value)
         fids_done.append("location")
         fids_done.append("locationKey")
-    if "URLs" in props:
-        for u in props["URLs"]:
+    urls = item.get_property("URLs")
+    if urls:
+        for u in urls.raw:
             kp.add_url(u["url"])
         fids_done.append("URLs")
-    if "URL" in props:
-        kp.add_url(props["URL"])
+    url = item.get_property("URL")
+    if url:
+        kp.add_url(url.value)
         fids_done.append("URL")
 
     # Tags
@@ -87,13 +90,15 @@ for item in opif:
             kp.add_totp(totp[0], title=totp[1])
 
     # Notes
-    if "notesPlain" in props:
-        entry.notes = props["notesPlain"]
+    notes_plain = item.get_property("notesPlain")
+    print("Notes: {}".format(repr(notes_plain)))
+    if notes_plain:
+        entry.notes = notes_plain.raw
         fids_done.append("notesPlain")
 
     # Dates
-    entry.ctime = datetime.datetime.fromtimestamp(props["createdAt"])
-    entry.mtime = datetime.datetime.fromtimestamp(props["updatedAt"])
+    entry.ctime = datetime.datetime.fromtimestamp(item.get_property("createdAt").raw)
+    entry.mtime = datetime.datetime.fromtimestamp(item.get_property("updatedAt").raw)
     fids_done.append("createdAt")
     fids_done.append("updatedAt")
 
@@ -105,15 +110,19 @@ for item in opif:
         if type(seek_fields) is str:
             seek_fields = [seek_fields]
         for fid in seek_fields:
-            if fid in props:
-                setattr(entry, map_field, props[fid])
+            prop = item.get_property(fid)
+            if prop:
+                setattr(entry, map_field, prop.value)
                 fids_done.append(fid)
                 break
 
     # Set remaining properties
-    for k, v in props.items():
+    for k in item.get_property_keys():
         if k in ["Password"]:
             # Forbidden name
+            continue
+        if k[:5] == "TOTP_":
+            # Skip OTPs as they're handled separately
             continue
         if k in RECORD_MAP["General"]["ignored"]:
             # Skip ignored fields
@@ -121,25 +130,22 @@ for item in opif:
         if k in fids_done:
             # Skip fields processed elsewhere
             continue
-        kp.set_prop(k, str(v))
+        v = item.get_property(k)
+        if v.is_web_field:
+            kp.set_prop("KPH: {}".format(v.title), v.value, protected=v.is_protected)
+        else:
+            kp.set_prop(v.title, v.value, protected=v.is_protected)
 
 
 
    # TODO: scope: Never = never suggest in browser (i.e. don't add KPH fields)
 
-    secure = item.raw["secureContents"]
-    # Other web fields
-    if "fields" in secure:
-        for field in secure["fields"]:
-            d = field.get("designation")
-            if d != "username" and d != "password":
-                entry.set_custom_property("KPH: {}".format(field["name"]), field["value"])
-
     # AFTER ALL OTHER PROCESSING IS DONE: Password history
-    if "passwordHistory" in props:
+    password_history = item.get_property("passwordHistory")
+    if password_history:
         original_password = entry.password
         original_mtime = entry.mtime
-        for p in props["passwordHistory"]:
+        for p in password_history.raw:
             d = datetime.datetime.fromtimestamp(p["time"])
             entry.mtime = d
             entry.password = p["value"]

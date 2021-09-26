@@ -51,7 +51,7 @@ class KpWriter:
             suffix = "_{}".format(suffix_ctr)
 
         self.set_prop("TimeOtp-Secret-Base32{}".format(suffix), init_string, True)
-        self.set_prop("otp{}".format(suffix), otp_url)
+        self.set_prop("otp{}".format(suffix), otp_url, True)
         if len(title) > 0:
             self.set_prop("otp_title{}".format(suffix), title)
 

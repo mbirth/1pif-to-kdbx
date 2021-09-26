@@ -5,6 +5,7 @@ General:
         - securityLevel
         - typeName
         - uuid
+        - trashed
 
 # Mapping of 1P types for best conversion
 
